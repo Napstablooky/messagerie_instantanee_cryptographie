@@ -13,16 +13,34 @@ public class Client {
     private Interceptor interceptor;
     private volatile boolean running;
 
-    public Client() {
-        this.interceptor = new Interceptor();
+    // Pour la 3.2.1 on va remplacer le public client en rajoutant string password et password
+    public Client(String password) {
+        this.interceptor = new Interceptor(password);
         this.running = true;
     }
 
-    public static void main(String[] args) {
+
+// remplacer le main pour qu'il soit en accord avec public class
+// on modifie le main pour qu'il puisse lire les args[0]
+
+    /* public static void main(String[] args) {
         System.out.println("Starting client ...");
         Client client = new Client();
         client.start();
     }
+*/ 
+    public static void main(String[] args) {
+    System.out.println("Starting client ...");
+
+    if (args.length < 1) {
+        System.out.println("Usage: java Client <password>");
+        return;
+    }
+
+    String password = args[0];
+    Client client = new Client(password);
+    client.start();
+}
 
     public void start() {
         System.out.println("=== Crypto Chat Client ===");
