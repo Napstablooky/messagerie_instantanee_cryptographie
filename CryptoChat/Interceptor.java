@@ -1,6 +1,7 @@
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
 import javax.crypto.Cipher;
@@ -61,14 +62,57 @@ public class Interceptor {
         return new SecretKeySpec(keyBytes, "AES");
     }
 
-    public String beforeSend(String plainText) {
+    /*public String beforeSend(String plainText) {
         try {
            System.out.println("[Interceptor] Encrypting message: " + plainText);
 			return rot13(plainText);
         } catch (Exception e) {
             throw new RuntimeException("Encryption failed", e);
         }
+    }*/
+
+
+
+    
+    //je change le rot13 en base pour pouvoir faire le 3.2.4 l'eereur c'est à cause du rot
+
+    public String beforeSend(String plainText) {
+    try {
+        // Affichage dans la console pour indiquer que le message est en cours de chiffrement
+        System.out.println("[Interceptor] Encrypting message: " + plainText);
+
+        // Recréation de la clé AES à partir du mot de passe
+        SecretKey key = deriveAesKeyFromPassword();
+
+        // Génération d'un IV aléatoire de 16 octets pour AES-CBC
+        byte[] iv = new byte[16];
+        new SecureRandom().nextBytes(iv);
+
+        // Création de l'objet Cipher avec AES en mode CBC et padding PKCS5
+        //Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+
+        //mise en place d'une autre configuration (3.2.3)
+        //Ici on remplace juste le cipher getinstance par celui ci
+        Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
+
+        // Initialisation du cipher en mode chiffrement avec la clé et l'IV
+        cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
+
+        // Chiffrement du texte en clair
+        byte[] ct = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
+
+        // Concaténation IV || ciphertext
+        byte[] out = new byte[iv.length + ct.length];
+        System.arraycopy(iv, 0, out, 0, iv.length);
+        System.arraycopy(ct, 0, out, iv.length, ct.length);
+
+        // Encodage Base64 pour transmettre le message sous forme textuelle
+        return Base64.getEncoder().encodeToString(out);
+
+    } catch (Exception e) {
+        throw new RuntimeException("Encryption failed", e);
     }
+}
 
     //Donc là c'est l'ancienne version 
     // toujours pour la question 3.2.2
