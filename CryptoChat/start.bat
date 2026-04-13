@@ -20,14 +20,14 @@ timeout /t 2 /nobreak >nul
 
 REM Launch Client 1 in new window
 echo [2/3] Launching Client 1...
-start "Crypto Chat - Client 1" cmd /k "cd /d "%SCRIPT_DIR%" && java Client"
+start "Crypto Chat - Client 1" cmd /k "cd /d "%SCRIPT_DIR%" && java Client client1_private.pem client1_cert.pem ca_cert.pem"
 
 REM Wait 1 second before launching second client
 timeout /t 1 /nobreak >nul
 
 REM Launch Client 2 in new window
 echo [3/3] Launching Client 2...
-start "Crypto Chat - Client 2" cmd /k "cd /d "%SCRIPT_DIR%" && java Client"
+start "Crypto Chat - Client 2" cmd /k "cd /d "%SCRIPT_DIR%" && java Client client2_private.pem client2_cert.pem ca_cert.pem"
 
 echo.
 echo =========================================

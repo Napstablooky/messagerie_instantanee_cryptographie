@@ -54,34 +54,59 @@ public class ServerInterceptor {
 */
 
 
-//Implementation de la partie 3.2.4
+// Implementation de la partie 3.7 : Attaques résiduelles
+// Attaque 1 - Rejeu : le serveur remplace le 2ème message de Client 1 par le 1er (seq=0 rejoué)
+//   → Client 2 attend seq=1 mais reçoit seq=0 → [REPLAY DETECTE]
+// Attaque 2 - Suppression : le 3ème message de Client 1 est supprimé (return null)
+//   → Client 2 ne reçoit rien, le compteur se désynchronise
 
+import java.security.*;
+import java.security.spec.*;
 import java.util.Base64;
 
 public class ServerInterceptor {
 
+    private int handshakeCount = 0;
+    private int c1MsgCount = 0;       // nombre de messages reçus de Client 1
+    private String savedC1Msg = null; // 1er message de Client 1 sauvegardé
+
     public ServerInterceptor() {
-        System.out.println("[Server] MITM modification mode");
+        System.out.println("[Server] Mode attaques residuelles (rejeu + suppression)");
     }
 
-    public String onMessageRelay(String message, int fromClient, int toClient) {
-        try {
-            System.out.println("[MITM] Message intercepté (Base64) : " + message);
+    public synchronized String onMessageRelay(String message, int fromClient, int toClient) {
 
-            byte[] all = Base64.getDecoder().decode(message);
-
-            // IV = 16 octets, puis ciphertext
-            // On modifie un octet plus loin pour éviter de casser le padding final
-            if (all.length > 40) {
-                all[30] ^= 0x01;
-                System.out.println("[MITM] Un bit a été modifié à l'index 30.");
-            }
-
-            return Base64.getEncoder().encodeToString(all);
-
-        } catch (Exception e) {
-            System.out.println("[MITM] Erreur : " + e.getMessage());
+        // Relayer le handshake normalement
+        if (handshakeCount < 2) {
+            handshakeCount++;
+            System.out.println("[Server] Relaying handshake from Client " + fromClient);
             return message;
         }
+
+        if (fromClient == 1) {
+            c1MsgCount++;
+
+            if (c1MsgCount == 1) {
+                // 1er message de Client 1 : sauvegarder et relayer normalement
+                savedC1Msg = message;
+                System.out.println("[Server] 1er message Client 1 sauvegarde (seq=0), relay normal");
+                return message;
+            }
+
+            if (c1MsgCount == 2) {
+                // 2ème message de Client 1 : rejouer le 1er (seq=0) au lieu du 2ème (seq=1)
+                System.out.println("[Replay] ATTAQUE REJEU : seq=0 rejoue vers Client 2 (attendu seq=1) !");
+                return savedC1Msg;
+            }
+
+            if (c1MsgCount == 3) {
+                // 3ème message de Client 1 : suppression
+                System.out.println("[Suppression] ATTAQUE SUPPRESSION : message de Client 1 supprime !");
+                return null;
+            }
+        }
+
+        System.out.println("[Server -> Client " + toClient + "]: relay normal");
+        return message;
     }
 }

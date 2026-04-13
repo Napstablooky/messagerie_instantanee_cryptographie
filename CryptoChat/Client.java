@@ -13,34 +13,21 @@ public class Client {
     private Interceptor interceptor;
     private volatile boolean running;
 
-    // Pour la 3.2.1 on va remplacer le public client en rajoutant string password et password
-    public Client(String password) {
-        this.interceptor = new Interceptor(password);
+    // 3.6 : on charge la clé privée + le certificat X.509 propre + le cert CA
+    public Client(String privateKeyPath, String certPath, String caCertPath) {
+        this.interceptor = new Interceptor(privateKeyPath, certPath, caCertPath);
         this.running = true;
     }
 
-
-// remplacer le main pour qu'il soit en accord avec public class
-// on modifie le main pour qu'il puisse lire les args[0]
-
-    /* public static void main(String[] args) {
+    public static void main(String[] args) {
+        if (args.length < 3) {
+            System.err.println("Usage : java Client <private_key.pem> <cert.pem> <ca_cert.pem>");
+            System.exit(1);
+        }
         System.out.println("Starting client ...");
-        Client client = new Client();
+        Client client = new Client(args[0], args[1], args[2]);
         client.start();
     }
-*/ 
-    public static void main(String[] args) {
-    System.out.println("Starting client ...");
-
-    if (args.length < 1) {
-        System.out.println("Usage: java Client <password>");
-        return;
-    }
-
-    String password = args[0];
-    Client client = new Client(password);
-    client.start();
-}
 
     public void start() {
         System.out.println("=== Crypto Chat Client ===");
