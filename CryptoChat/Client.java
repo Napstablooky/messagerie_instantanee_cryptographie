@@ -13,14 +13,19 @@ public class Client {
     private Interceptor interceptor;
     private volatile boolean running;
 
-    public Client() {
-        this.interceptor = new Interceptor();
+    // 3.6 : on charge la clé privée + le certificat X.509 propre + le cert CA
+    public Client(String privateKeyPath, String certPath, String caCertPath) {
+        this.interceptor = new Interceptor(privateKeyPath, certPath, caCertPath);
         this.running = true;
     }
 
     public static void main(String[] args) {
+        if (args.length < 3) {
+            System.err.println("Usage : java Client <private_key.pem> <cert.pem> <ca_cert.pem>");
+            System.exit(1);
+        }
         System.out.println("Starting client ...");
-        Client client = new Client();
+        Client client = new Client(args[0], args[1], args[2]);
         client.start();
     }
 
